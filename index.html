@@ -1458,9 +1458,17 @@
     g.querySelector('[data-mfill]').style.width = pct + '%';
     g.querySelector('[data-mcount]').textContent = done + '/' + list.length + ' complete · ' + pct + '%';
     var rag = g.querySelector('[data-rag]'), txt = g.querySelector('[data-ragtext]');
+    /* Colour = how far through the month we are (the traffic light).
+       Label = what is actually happening. Keep them independent, or a month
+       with real work underway can end up announcing itself as "Not started". */
     var cls = pct >= 80 ? 'green' : pct >= 30 ? 'amber' : 'red';
+    var label = pct === 0   ? 'Not started'
+              : pct === 100 ? 'Complete'
+              : pct < 30    ? 'Just started'
+              : pct < 80    ? 'In progress'
+              :               'Nearly done';
     rag.className = 'rag ' + cls;
-    txt.textContent = cls === 'green' ? 'On track' : cls === 'amber' ? 'In progress' : 'Not started';
+    txt.textContent = label;
   }
 
   function renderAll(){
