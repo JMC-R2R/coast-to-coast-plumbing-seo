@@ -129,6 +129,105 @@
   .tab-btn .tn{font-family:var(--mono);font-size:10px;color:var(--blue);margin-right:6px;}
   .tab-panel{display:none;}
   .tab-panel.active{display:block;}
+
+  /* ============================================================
+     PROGRESS TRACKER — shared by Month 1 Briefs (05) + Progress (06)
+     State lives in localStorage, so it is per-browser.
+     ============================================================ */
+  :root{
+    --st-none:#c2c9d4;   /* not started  */
+    --st-start:#e8a33d;  /* started      */
+    --st-work:#17B4F0;   /* working      */
+    --st-almost:#7c5cd6; /* almost done  */
+    --st-done:#1c7c54;   /* completed    */
+  }
+  .trk{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 16px;
+    background:var(--soft);border-bottom:1px solid var(--line);}
+  .trk-btn{appearance:none;border:1px solid var(--line);background:#fff;border-radius:999px;
+    padding:4px 12px 4px 8px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--mono);font-size:10.5px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.5px;color:var(--ink-dk);transition:box-shadow .15s,border-color .15s;}
+  .trk-btn:hover{border-color:var(--st);box-shadow:0 0 0 3px color-mix(in srgb,var(--st) 18%,transparent);}
+  .trk-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+  .trk-dot{width:9px;height:9px;border-radius:50%;background:var(--st);flex:none;
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--st) 22%,transparent);}
+  .trk-bar{flex:1 1 150px;min-width:110px;height:7px;border-radius:99px;background:#e6eaf0;overflow:hidden;}
+  .trk-fill{display:block;height:100%;border-radius:99px;background:var(--st);transition:width .25s ease;}
+  .trk-pct{font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--muted);
+    min-width:34px;text-align:right;}
+  .trk-hint{font-family:var(--mono);font-size:9.5px;color:var(--muted);opacity:.75;}
+
+  /* compact meter — used inside the Power Mode table */
+  .trk.mini{padding:7px 0 0;background:none;border:0;gap:8px;}
+  .trk.mini .trk-btn{padding:2px 9px 2px 6px;font-size:9.5px;}
+  .trk.mini .trk-bar{flex-basis:90px;min-width:70px;height:5px;}
+
+  /* ---------- Roll-up summary strip ---------- */
+  .rollup{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:18px 0 6px;
+    page-break-inside:avoid;}
+  .rollup-top{background:var(--ink-dk);color:#fff;padding:13px 18px;display:flex;
+    align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+  .rollup-top .rl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;
+    letter-spacing:2.5px;color:var(--blue);font-weight:700;}
+  .rollup-top .rr{font-family:var(--sans);font-weight:900;font-size:19px;}
+  .rollup-top .rr small{font-weight:400;font-size:12px;color:#9aa3b2;margin-left:6px;
+    font-family:var(--mono);}
+  .rollup-bar{height:10px;background:#e6eaf0;}
+  .rollup-bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--st-done));
+    transition:width .3s ease;}
+  .rollup-legend{display:flex;flex-wrap:wrap;gap:8px;padding:11px 18px;background:var(--soft);}
+  .lg{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;
+    font-weight:700;color:var(--ink-dk);background:#fff;border:1px solid var(--line);
+    border-radius:99px;padding:4px 11px;}
+  .lg i{width:8px;height:8px;border-radius:50%;background:var(--st);flex:none;}
+  .lg b{color:var(--muted);font-weight:700;}
+  .trk-actions{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 12px;background:var(--soft);}
+  .trk-act{appearance:none;border:1px solid var(--line);background:#fff;border-radius:7px;
+    padding:5px 11px;cursor:pointer;font-family:var(--mono);font-size:10px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.5px;color:var(--muted);}
+  .trk-act:hover{border-color:var(--blue);color:var(--blue);}
+
+  /* ---------- Tab 06 · bird's-eye board ---------- */
+  #tab-progress .mgroup{border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    margin:18px 0;page-break-inside:avoid;}
+  #tab-progress .mgroup-head{background:var(--ink-dk);color:#fff;padding:12px 18px;display:flex;
+    align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+  #tab-progress .mgroup-head .mh-t{font-family:var(--sans);font-weight:900;font-size:16px;
+    display:flex;align-items:center;gap:10px;}
+  #tab-progress .mgroup-head .mh-m{font-family:var(--mono);font-size:10.5px;color:#9aa3b2;
+    font-weight:700;letter-spacing:.5px;}
+  #tab-progress .rag{font-family:var(--mono);font-size:9.5px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.6px;padding:3px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:6px;}
+  #tab-progress .rag i{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none;}
+  #tab-progress .rag.red{background:#fdeaea;color:#b3261e;}
+  #tab-progress .rag.amber{background:#fff5e3;color:#8a5a00;}
+  #tab-progress .rag.green{background:#e8f4ee;color:var(--st-done);}
+  #tab-progress .mgroup-bar{height:8px;background:#e6eaf0;}
+  #tab-progress .mgroup-bar>i{display:block;height:100%;background:var(--blue);transition:width .3s ease;}
+  #tab-progress .prow{display:flex;align-items:center;gap:12px;padding:9px 18px;
+    border-bottom:1px solid var(--line);}
+  #tab-progress .prow:last-child{border-bottom:0;}
+  #tab-progress .prow:nth-child(even){background:var(--soft);}
+  #tab-progress .prow .pk{font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.5px;padding:2px 7px;border-radius:5px;flex:none;width:64px;text-align:center;}
+  #tab-progress .pk.loc{background:var(--soft-blue);color:#0a6a93;}
+  #tab-progress .pk.blog{background:#eef7ee;color:var(--good);}
+  #tab-progress .pk.power{background:#fff8e1;color:#8a6d00;}
+  #tab-progress .prow .pt{flex:1 1 200px;font-size:13px;font-weight:600;color:var(--ink-dk);min-width:0;}
+  #tab-progress .prow .pt span{display:block;font-family:var(--mono);font-size:9.5px;
+    font-weight:400;color:var(--muted);margin-top:1px;}
+  #tab-progress .subhead{font-family:var(--mono);font-size:9.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);background:#eef1f6;
+    padding:6px 18px;border-bottom:1px solid var(--line);}
+
+  @media print{
+    .trk-btn,.trk-act{border-color:var(--line)!important;}
+    .trk-hint,.trk-actions{display:none!important;}
+  }
+  @media(max-width:640px){
+    .trk{gap:8px;}
+    #tab-progress .prow{flex-wrap:wrap;}
+  }
   /* ---------- Audit / priority ---------- */
   .prio{display:inline-block;font-family:var(--mono);font-weight:700;font-size:10px;padding:2px 7px;border-radius:5px;color:#fff;letter-spacing:.5px;}
   .p1{background:#b3261e;} .p2{background:#a96a00;} .p3{background:#5b6472;}
@@ -191,6 +290,7 @@
   <button class="tab-btn" data-tab="tab-gbp"><span class="tn">03</span>GBP Optimisation</button>
   <button class="tab-btn" data-tab="tab-brief"><span class="tn">04</span>Team Brief</button>
   <button class="tab-btn" data-tab="tab-briefs"><span class="tn">05</span>Month 1 Briefs</button>
+  <button class="tab-btn" data-tab="tab-progress"><span class="tn">06</span>Progress</button>
 </nav>
 
 <div id="tab-strategy" class="tab-panel active">
@@ -767,12 +867,28 @@
       <li>Make every location page <b>genuinely different</b> — the local angle is mandatory, not decoration (avoids duplicate-content penalties).</li>
     </ul>
 
+    <!-- ===== Month 1 progress roll-up ===== -->
+    <div class="rollup" id="rollup-m1">
+      <div class="rollup-top">
+        <span class="rl">Month 1 progress</span>
+        <span class="rr" data-rollup="count">— / 14 complete<small data-rollup="pct"></small></span>
+      </div>
+      <div class="rollup-bar"><i data-rollup="fill" style="width:0%"></i></div>
+      <div class="rollup-legend" data-rollup="legend"></div>
+      <div class="trk-actions">
+        <button class="trk-act" data-act="copy">Copy status</button>
+        <button class="trk-act" data-act="reset">Reset all</button>
+        <span class="trk-hint" style="align-self:center">Click any meter to advance &middot; Shift-click to go back &middot; saved in this browser</span>
+      </div>
+    </div>
+
   <!-- ============ LOCATION PAGES ============ -->
   <h2 class="block"><span class="c">A ·</span> Location pages <span style="font-weight:400;font-size:13px;color:var(--muted)">(target both "blocked drains [suburb]" and "plumber [suburb]")</span></h2>
 
   <!-- BRIGHTON -->
   <div class="brief">
     <div class="bh"><span class="t">1 · Blocked Drains Brighton</span><span class="badge b-loc">Location page</span></div>
+    <div class="trk" data-asset="m1-loc-brighton"></div>
     <div class="bb">
       <table class="f">
         <tr><td>URL</td><td><code>/blocked-drains-brighton/</code></td></tr>
@@ -805,6 +921,7 @@
   <!-- CHELTENHAM -->
   <div class="brief">
     <div class="bh"><span class="t">2 · Blocked Drains Cheltenham</span><span class="badge b-loc">Location page</span></div>
+    <div class="trk" data-asset="m1-loc-cheltenham"></div>
     <div class="bb">
       <table class="f">
         <tr><td>URL</td><td><code>/blocked-drains-cheltenham/</code></td></tr>
@@ -836,6 +953,7 @@
   <!-- SEAFORD -->
   <div class="brief">
     <div class="bh"><span class="t">3 · Blocked Drains Seaford</span><span class="badge b-loc">Location page</span></div>
+    <div class="trk" data-asset="m1-loc-seaford"></div>
     <div class="bb">
       <table class="f">
         <tr><td>URL</td><td><code>/blocked-drains-seaford/</code></td></tr>
@@ -867,6 +985,7 @@
   <!-- MOORABBIN -->
   <div class="brief">
     <div class="bh"><span class="t">4 · Blocked Drains Moorabbin</span><span class="badge b-loc">Location page</span></div>
+    <div class="trk" data-asset="m1-loc-moorabbin"></div>
     <div class="bb">
       <table class="f">
         <tr><td>URL</td><td><code>/blocked-drains-moorabbin/</code></td></tr>
@@ -898,6 +1017,7 @@
   <!-- MORNINGTON -->
   <div class="brief">
     <div class="bh"><span class="t">5 · Blocked Drains Mornington</span><span class="badge b-loc">Location page · fixes cannibalisation</span></div>
+    <div class="trk" data-asset="m1-loc-mornington"></div>
     <div class="bb">
       <table class="f">
         <tr><td>URL</td><td><code>/blocked-drains-mornington/</code></td></tr>
@@ -930,6 +1050,7 @@
   <!-- SANDRINGHAM -->
   <div class="brief">
     <div class="bh"><span class="t">6 · Blocked Drains Sandringham</span><span class="badge b-loc">Location page</span></div>
+    <div class="trk" data-asset="m1-loc-sandringham"></div>
     <div class="bb">
       <table class="f">
         <tr><td>URL</td><td><code>/blocked-drains-sandringham/</code></td></tr>
@@ -965,6 +1086,7 @@
   <!-- BLOG 1 -->
   <div class="brief">
     <div class="bh"><span class="t">7 · How to clear a blocked drain</span><span class="badge b-blog">AI-Overview blog</span></div>
+    <div class="trk" data-asset="m1-blog-clear"></div>
     <div class="bb">
       <table class="f">
         <tr><td>URL</td><td><code>/blog/how-to-clear-a-blocked-drain/</code></td></tr>
@@ -994,6 +1116,7 @@
   <!-- BLOG 2 -->
   <div class="brief">
     <div class="bh"><span class="t">8 · What causes blocked drains?</span><span class="badge b-blog">AI-Overview blog</span></div>
+    <div class="trk" data-asset="m1-blog-causes"></div>
     <div class="bb">
       <table class="f">
         <tr><td>URL</td><td><code>/blog/what-causes-blocked-drains/</code></td></tr>
@@ -1023,6 +1146,7 @@
   <!-- BLOG 3 -->
   <div class="brief">
     <div class="bh"><span class="t">9 · How to unblock an outside drain</span><span class="badge b-blog">AI-Overview blog</span></div>
+    <div class="trk" data-asset="m1-blog-outside"></div>
     <div class="bb">
       <table class="f">
         <tr><td>URL</td><td><code>/blog/how-to-unblock-an-outside-drain/</code></td></tr>
@@ -1051,6 +1175,7 @@
   <!-- BLOG 4 -->
   <div class="brief">
     <div class="bh"><span class="t">10 · Blocked drains: tenant or landlord?</span><span class="badge b-blog">AI-Overview blog</span></div>
+    <div class="trk" data-asset="m1-blog-tenant"></div>
     <div class="bb">
       <table class="f">
         <tr><td>URL</td><td><code>/blog/blocked-drains-tenant-or-landlord/</code></td></tr>
@@ -1082,10 +1207,10 @@
   <p class="intro">Same answer-first build as the blogs, but these chase the questions people ask AI Overviews &amp; ChatGPT/Gemini. Lead with the suburb, be genuinely useful, position Coast to Coast as the obvious local choice. Schema: FAQPage. 700–1,100 words each.</p>
   <table class="mini">
     <tr><th>Article (H1)</th><th>Angle / target</th><th>Answer to lead with</th></tr>
-    <tr><td>Who's the Best Plumber to Unblock a Drain in Mornington?</td><td>Local recommendation — LLM "recommend a plumber" prompts</td><td>What to look for in a blocked-drain plumber (licensed, same-day, camera-equipped, local reviews) — then why Coast to Coast fits, with service area &amp; reviews.</td></tr>
-    <tr><td>How Much Does a Plumber Charge to Clear a Blocked Drain?</td><td>Cost question (distinct from the how-to blog)</td><td>Typical price ranges and what drives the cost (access, blockage type, jetting vs reline), plus how Coast to Coast quotes.</td></tr>
-    <tr><td>Why Does My Drain Keep Blocking Again and Again?</td><td>Recurring-problem query</td><td>Recurring blockages usually mean a root cause — tree roots, a sag/belly in the pipe, or a partial collapse — found with a CCTV camera.</td></tr>
-    <tr><td>Blocked Drain After Hours — Who to Call in Bayside?</td><td>Emergency local query</td><td>What counts as a drainage emergency &amp; what to do first, then 24/7 local response across Bayside.</td></tr>
+    <tr><td>Who's the Best Plumber to Unblock a Drain in Mornington?<div class="trk mini" data-asset="m1-pm-best"></div></td><td>Local recommendation — LLM "recommend a plumber" prompts</td><td>What to look for in a blocked-drain plumber (licensed, same-day, camera-equipped, local reviews) — then why Coast to Coast fits, with service area &amp; reviews.</td></tr>
+    <tr><td>How Much Does a Plumber Charge to Clear a Blocked Drain?<div class="trk mini" data-asset="m1-pm-cost"></div></td><td>Cost question (distinct from the how-to blog)</td><td>Typical price ranges and what drives the cost (access, blockage type, jetting vs reline), plus how Coast to Coast quotes.</td></tr>
+    <tr><td>Why Does My Drain Keep Blocking Again and Again?<div class="trk mini" data-asset="m1-pm-recurring"></div></td><td>Recurring-problem query</td><td>Recurring blockages usually mean a root cause — tree roots, a sag/belly in the pipe, or a partial collapse — found with a CCTV camera.</td></tr>
+    <tr><td>Blocked Drain After Hours — Who to Call in Bayside?<div class="trk mini" data-asset="m1-pm-afterhours"></div></td><td>Emergency local query</td><td>What counts as a drainage emergency &amp; what to do first, then 24/7 local response across Bayside.</td></tr>
   </table>
 
   <!-- ============ GBP ============ -->
@@ -1108,6 +1233,273 @@
   </section>
 </div>
 </div><!-- /tab-briefs -->
+
+<!-- ==================== TAB 06 · PROGRESS ==================== -->
+<div id="tab-progress" class="tab-panel">
+<div class="page">
+  <section>
+    <p class="kicker">Delivery Tracker · Bird's-Eye View</p>
+    <div class="sec-head"><div class="sec-num">P</div><h2>Progress board — every deliverable, one screen</h2></div>
+    <p class="lead">Titles and progress only — no briefs, no detail. Each month holds <b>14 tracked assets</b> (6 location/service pages · 4 AI-Overview blogs · 4 ⚡ Power Mode articles). Click any meter here or in the Month 1 Briefs tab — they share the same saved state.</p>
+
+    <div class="rollup" id="rollup-all">
+      <div class="rollup-top">
+        <span class="rl">All three months</span>
+        <span class="rr" data-rollup="count">— / 42 complete<small data-rollup="pct"></small></span>
+      </div>
+      <div class="rollup-bar"><i data-rollup="fill" style="width:0%"></i></div>
+      <div class="rollup-legend" data-rollup="legend"></div>
+      <div class="trk-actions">
+        <button class="trk-act" data-act="copy">Copy status</button>
+        <button class="trk-act" data-act="reset">Reset all</button>
+        <span class="trk-hint" style="align-self:center">Click to advance &middot; Shift-click to go back &middot; saved in this browser</span>
+      </div>
+    </div>
+
+    <div id="progress-board"></div>
+
+    <div class="callout" style="margin-top:18px;">
+      <b>How the traffic light works:</b> it reads completion only, not calendar dates — nothing here assumes a deadline we haven't agreed.
+      <span style="color:#b3261e;font-weight:700;">Red</span> = under 30% of the month done ·
+      <span style="color:#8a5a00;font-weight:700;">Amber</span> = 30–79% ·
+      <span style="color:#1c7c54;font-weight:700;">Green</span> = 80%+.
+      Each asset scores 0% not started · 25% started · 50% working · 80% almost done · 100% completed.
+      Once we lock start dates with the delivery team we can switch this to a true ahead/behind-schedule light.
+    </div>
+
+    <footer class="docfoot">
+      <span>Delivery Progress Board &middot; prepared by <b>Ready to Rank</b></span>
+      <span>readytorank.com.au &middot; @ready2rank &middot; Confidential</span>
+    </footer>
+  </section>
+</div>
+</div><!-- /tab-progress -->
+
+<script>
+/* ============================================================
+   PROGRESS TRACKER
+   Status is stored per-browser in localStorage. Both the Month 1
+   brief cards and the Tab 06 board render from the same registry
+   and the same store, so a click in one updates the other.
+   ============================================================ */
+(function(){
+  var KEY = 'c2c-progress-v1';
+
+  var STATES = [
+    {k:'none',   label:'Not started', pct:0,   col:'var(--st-none)'},
+    {k:'started',label:'Started',     pct:25,  col:'var(--st-start)'},
+    {k:'working',label:'Working',     pct:50,  col:'var(--st-work)'},
+    {k:'almost', label:'Almost done', pct:80,  col:'var(--st-almost)'},
+    {k:'done',   label:'Completed',   pct:100, col:'var(--st-done)'}
+  ];
+  var IDX = {}; STATES.forEach(function(s,i){ IDX[s.k] = i; });
+
+  /* --- the 42 tracked assets, taken from the Strategy + Briefs tabs --- */
+  var ASSETS = [
+    /* ---- MONTH 1 · July — Blocked Drains, Bayside ---- */
+    {id:'m1-loc-brighton',    m:1, t:'loc',   n:'Blocked Drains Brighton',            u:'/blocked-drains-brighton/'},
+    {id:'m1-loc-cheltenham',  m:1, t:'loc',   n:'Blocked Drains Cheltenham',          u:'/blocked-drains-cheltenham/'},
+    {id:'m1-loc-seaford',     m:1, t:'loc',   n:'Blocked Drains Seaford',             u:'/blocked-drains-seaford/'},
+    {id:'m1-loc-moorabbin',   m:1, t:'loc',   n:'Blocked Drains Moorabbin',           u:'/blocked-drains-moorabbin/'},
+    {id:'m1-loc-mornington',  m:1, t:'loc',   n:'Blocked Drains Mornington',          u:'fixes cannibalisation'},
+    {id:'m1-loc-sandringham', m:1, t:'loc',   n:'Blocked Drains Sandringham',         u:'/blocked-drains-sandringham/'},
+    {id:'m1-blog-clear',      m:1, t:'blog',  n:'How to clear a blocked drain'},
+    {id:'m1-blog-causes',     m:1, t:'blog',  n:'What causes blocked drains?'},
+    {id:'m1-blog-outside',    m:1, t:'blog',  n:'How to unblock an outside drain'},
+    {id:'m1-blog-tenant',     m:1, t:'blog',  n:'Blocked drains: tenant or landlord?'},
+    {id:'m1-pm-best',         m:1, t:'power', n:'Who’s the best plumber to unblock a drain in Mornington?'},
+    {id:'m1-pm-cost',         m:1, t:'power', n:'How much does a plumber charge to clear a blocked drain?'},
+    {id:'m1-pm-recurring',    m:1, t:'power', n:'Why does my drain keep blocking again and again?'},
+    {id:'m1-pm-afterhours',   m:1, t:'power', n:'Blocked drain after hours — who to call in Bayside?'},
+
+    /* ---- MONTH 2 · August — Finish Drains, Start Roof ---- */
+    {id:'m2-loc-mentone',     m:2, t:'loc',   n:'Blocked Drains Mentone',             u:'/blocked-drains-mentone/'},
+    {id:'m2-loc-mordialloc',  m:2, t:'loc',   n:'Blocked Drains Mordialloc',          u:'/blocked-drains-mordialloc/'},
+    {id:'m2-loc-hampton',     m:2, t:'loc',   n:'Blocked Drains Hampton',             u:'/blocked-drains-hampton/'},
+    {id:'m2-loc-cctv',        m:2, t:'loc',   n:'CCTV Drain Inspections (service)',   u:'/cctv-drain-inspections/'},
+    {id:'m2-loc-roofbayside', m:2, t:'loc',   n:'Roof Leak Detection — Bayside (hub)', u:'/roof-leak-detection-bayside/'},
+    {id:'m2-loc-roofemerg',   m:2, t:'loc',   n:'Emergency Roof Leak Repairs (service)', u:'/emergency-roof-leak-repairs/'},
+    {id:'m2-blog-whyleak',    m:2, t:'blog',  n:'Why is my roof leaking? 7 common winter causes'},
+    {id:'m2-blog-findleak',   m:2, t:'blog',  n:'How to find a roof leak (and what to do next)'},
+    {id:'m2-blog-cctv',       m:2, t:'blog',  n:'What is a CCTV drain inspection — and when do you need one?'},
+    {id:'m2-blog-roofcost',   m:2, t:'blog',  n:'What does a roof leak repair cost?'},
+    {id:'m2-pm-specialist',   m:2, t:'power', n:'Who’s the best roof leak specialist near Brighton & Bayside?'},
+    {id:'m2-pm-insurance',    m:2, t:'power', n:'Does home insurance cover a leaking roof in Victoria?'},
+    {id:'m2-pm-condensation', m:2, t:'power', n:'Roof leak vs condensation — what’s actually dripping?'},
+    {id:'m2-pm-prepurchase',  m:2, t:'power', n:'Is a pre-purchase drain inspection worth it before you buy?'},
+
+    /* ---- MONTH 3 · September — Roof Depth + Secondary Services ---- */
+    {id:'m3-loc-roofmp',      m:3, t:'loc',   n:'Roof Leak Detection — Mornington Peninsula (hub)', u:'/roof-leak-detection-mornington-peninsula/'},
+    {id:'m3-loc-stormwater',  m:3, t:'loc',   n:'Stormwater Drains & Flooding (service)', u:'/stormwater-drains/'},
+    {id:'m3-loc-burstpipe',   m:3, t:'loc',   n:'Burst & Broken Pipes (service)',      u:'/burst-pipe-repairs/'},
+    {id:'m3-loc-highett',     m:3, t:'loc',   n:'Blocked Drains Highett',             u:'/blocked-drains-highett/'},
+    {id:'m3-loc-blackrock',   m:3, t:'loc',   n:'Blocked Drains Black Rock',          u:'/blocked-drains-black-rock/'},
+    {id:'m3-loc-beaumaris',   m:3, t:'loc',   n:'Blocked Drains Beaumaris',           u:'/blocked-drains-beaumaris/'},
+    {id:'m3-blog-emergency',  m:3, t:'blog',  n:'Roof leak emergency? What to do in the first hour'},
+    {id:'m3-blog-signs',      m:3, t:'blog',  n:'6 signs of a hidden roof leak (catch it early)'},
+    {id:'m3-blog-prevent',    m:3, t:'blog',  n:'How to prevent blocked drains before summer'},
+    {id:'m3-blog-burst',      m:3, t:'blog',  n:'Burst or broken pipe? Your first 4 steps'},
+    {id:'m3-pm-stormwater',   m:3, t:'power', n:'Who’s the best plumber for blocked stormwater on the Peninsula?'},
+    {id:'m3-pm-yardflood',    m:3, t:'power', n:'Why does my yard flood when it rains?'},
+    {id:'m3-pm-heavyrain',    m:3, t:'power', n:'Why does my roof only leak in heavy rain?'},
+    {id:'m3-pm-burstcost',    m:3, t:'power', n:'What does it cost to fix a burst pipe?'}
+  ];
+
+  var MONTHS = {
+    1:{name:'Month 1 · July',      focus:'Blocked Drains, Bayside'},
+    2:{name:'Month 2 · August',    focus:'Finish Drains → Start Roof'},
+    3:{name:'Month 3 · September', focus:'Roof Depth + Secondary Services'}
+  };
+  var TYPE = {loc:'Page', blog:'Blog', power:'Power'};
+
+  /* ---------- store ---------- */
+  var store = {};
+  try { store = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){ store = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e){} }
+  function get(id){ var k = store[id]; return (k && IDX[k] !== undefined) ? k : 'none'; }
+  function stateOf(id){ return STATES[IDX[get(id)]]; }
+  function bump(id, back){
+    var i = IDX[get(id)] + (back ? -1 : 1);
+    if(i < 0) i = STATES.length - 1;
+    if(i > STATES.length - 1) i = 0;
+    store[id] = STATES[i].k; save(); renderAll();
+  }
+
+  /* ---------- meters on the brief cards + Power Mode rows ---------- */
+  var meters = [].slice.call(document.querySelectorAll('.trk[data-asset]'));
+
+  function paintMeter(el){
+    var id = el.getAttribute('data-asset'), s = stateOf(id);
+    el.style.setProperty('--st', s.col);
+    el.querySelector('.trk-label').textContent = s.label;
+    el.querySelector('.trk-fill').style.width = s.pct + '%';
+    el.querySelector('.trk-pct').textContent = s.pct + '%';
+    el.querySelector('.trk-btn').setAttribute('aria-label', 'Status: ' + s.label + '. Click to advance.');
+  }
+
+  /* ---------- Tab 06 board ---------- */
+  var board = document.getElementById('progress-board');
+  function buildBoard(){
+    if(!board) return;
+    var html = '';
+    [1,2,3].forEach(function(m){
+      var list = ASSETS.filter(function(a){ return a.m === m; });
+      html += '<div class="mgroup" data-month="' + m + '">' +
+        '<div class="mgroup-head">' +
+          '<span class="mh-t">' + MONTHS[m].name +
+            '<span class="rag" data-rag><i></i><b data-ragtext>—</b></span></span>' +
+          '<span class="mh-m">' + MONTHS[m].focus + ' · <b data-mcount>—</b></span>' +
+        '</div>' +
+        '<div class="mgroup-bar"><i data-mfill style="width:0%"></i></div>';
+      ['loc','blog','power'].forEach(function(t){
+        var rows = list.filter(function(a){ return a.t === t; });
+        if(!rows.length) return;
+        html += '<div class="subhead">' +
+          (t === 'loc' ? 'Location &amp; service pages' : t === 'blog' ? 'AI-Overview blogs' : '⚡ Power Mode articles') +
+          ' · ' + rows.length + '</div>';
+        rows.forEach(function(a){
+          html += '<div class="prow">' +
+            '<span class="pk ' + a.t + '">' + TYPE[a.t] + '</span>' +
+            '<span class="pt">' + esc(a.n) + (a.u ? '<span>' + esc(a.u) + '</span>' : '') + '</span>' +
+            '<span class="trk" data-asset="' + a.id + '" style="background:none;border:0;padding:0;flex:1 1 190px;"></span>' +
+          '</div>';
+        });
+      });
+      html += '</div>';
+    });
+    board.innerHTML = html;
+    /* wire the freshly built board meters */
+    [].slice.call(board.querySelectorAll('.trk[data-asset]')).forEach(function(el){
+      buildMeter(el);
+      meters.push(el);
+    });
+  }
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  function buildMeter(el){
+    el.innerHTML =
+      '<button class="trk-btn" type="button">' +
+        '<span class="trk-dot"></span><span class="trk-label"></span>' +
+      '</button>' +
+      '<span class="trk-bar"><i class="trk-fill" style="width:0%"></i></span>' +
+      '<span class="trk-pct"></span>';
+    el.addEventListener('click', function(ev){
+      var btn = ev.target.closest('.trk-btn');
+      if(!btn) return;
+      bump(el.getAttribute('data-asset'), ev.shiftKey);
+    });
+  }
+
+  /* ---------- roll-ups ---------- */
+  function paintRollup(el, list){
+    if(!el) return;
+    var total = list.length, sum = 0, tally = {};
+    STATES.forEach(function(s){ tally[s.k] = 0; });
+    list.forEach(function(a){ var s = stateOf(a.id); sum += s.pct; tally[s.k]++; });
+    var pct = total ? Math.round(sum / total) : 0;
+    el.querySelector('[data-rollup="count"]').firstChild.nodeValue =
+      tally.done + ' / ' + total + ' complete';
+    el.querySelector('[data-rollup="pct"]').textContent = pct + '% overall';
+    el.querySelector('[data-rollup="fill"]').style.width = pct + '%';
+    el.querySelector('[data-rollup="legend"]').innerHTML = STATES.map(function(s){
+      return '<span class="lg" style="--st:' + s.col + '"><i></i>' + s.label + ' <b>' + tally[s.k] + '</b></span>';
+    }).join('');
+  }
+
+  function paintMonth(m){
+    var g = board && board.querySelector('.mgroup[data-month="' + m + '"]');
+    if(!g) return;
+    var list = ASSETS.filter(function(a){ return a.m === m; });
+    var sum = 0, done = 0;
+    list.forEach(function(a){ var s = stateOf(a.id); sum += s.pct; if(s.k === 'done') done++; });
+    var pct = Math.round(sum / list.length);
+    g.querySelector('[data-mfill]').style.width = pct + '%';
+    g.querySelector('[data-mcount]').textContent = done + '/' + list.length + ' complete · ' + pct + '%';
+    var rag = g.querySelector('[data-rag]'), txt = g.querySelector('[data-ragtext]');
+    var cls = pct >= 80 ? 'green' : pct >= 30 ? 'amber' : 'red';
+    rag.className = 'rag ' + cls;
+    txt.textContent = cls === 'green' ? 'On track' : cls === 'amber' ? 'In progress' : 'Not started';
+  }
+
+  function renderAll(){
+    meters.forEach(paintMeter);
+    paintRollup(document.getElementById('rollup-m1'), ASSETS.filter(function(a){ return a.m === 1; }));
+    paintRollup(document.getElementById('rollup-all'), ASSETS);
+    [1,2,3].forEach(paintMonth);
+  }
+
+  /* ---------- actions ---------- */
+  document.querySelectorAll('[data-act]').forEach(function(b){
+    b.addEventListener('click', function(){
+      if(b.getAttribute('data-act') === 'reset'){
+        if(confirm('Reset every asset back to "Not started"?')){ store = {}; save(); renderAll(); }
+      } else {
+        var lines = ['Coast to Coast — content progress'];
+        [1,2,3].forEach(function(m){
+          lines.push('', MONTHS[m].name.replace(/·/g,'-') + ':');
+          ASSETS.filter(function(a){ return a.m === m; }).forEach(function(a){
+            lines.push('  [' + stateOf(a.id).label + '] ' + a.n);
+          });
+        });
+        var txt = lines.join('\n');
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(txt).then(function(){
+            b.textContent = 'Copied ✓';
+            setTimeout(function(){ b.textContent = 'Copy status'; }, 1600);
+          });
+        } else { window.prompt('Copy this:', txt); }
+      }
+    });
+  });
+
+  /* ---------- boot ---------- */
+  meters.forEach(buildMeter);
+  buildBoard();
+  renderAll();
+})();
+</script>
 
 <script>
   document.querySelectorAll('.tab-btn').forEach(function(btn){
