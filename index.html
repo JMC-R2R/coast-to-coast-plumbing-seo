@@ -1282,12 +1282,13 @@
     <div id="progress-board"></div>
 
     <div class="callout" style="margin-top:18px;">
-      <b>How the traffic light works:</b> it reads completion only, not calendar dates — nothing here assumes a deadline we haven't agreed.
-      <span style="color:#b3261e;font-weight:700;">Red</span> = under 30% of the month done ·
-      <span style="color:#8a5a00;font-weight:700;">Amber</span> = 30–79% ·
-      <span style="color:#1c7c54;font-weight:700;">Green</span> = 80%+.
+      <b>How the traffic light works:</b> content goes to the client for approval on the <b>15th of the following month</b> — Month 1 (July) is due <b>15/08</b>, Month 2 <b>15/09</b>, Month 3 <b>15/10</b>. All 14 assets in a month count toward that deadline.
+      The light measures <b>pace against that date</b>, not raw completion: it compares where the month actually is against where it should be on a straight line from the 1st to the 15th.
+      <span style="color:#1c7c54;font-weight:700;">Green</span> = on track (at pace or ahead) ·
+      <span style="color:#8a5a00;font-weight:700;">Amber</span> = slipping (5–20 points behind pace) ·
+      <span style="color:#b3261e;font-weight:700;">Red</span> = behind (more than 20 points off pace, or past the 15th unfinished).
       Each asset scores 0% not started · 25% started · 50% working · 80% almost done · 100% completed.
-      Once we lock start dates with the delivery team we can switch this to a true ahead/behind-schedule light.
+      <b>Anything red or amber before the 15th gets chased</b> — the weekly update flags it so it can be brought back into the green in time.
     </div>
 
     <footer class="docfoot">
@@ -1376,11 +1377,31 @@
     {id:'m3-pm-burstcost',    m:3, t:'power', n:'What does it cost to fix a burst pipe?'}
   ];
 
+  /* Each month's content is sent to the client for approval on the 15th of the
+     FOLLOWING month. That deadline is what the traffic light measures against:
+     not "how much is done" but "are we on pace to be finished by the 15th".
+     Work window runs from the 1st of the content month to the approval date. */
   var MONTHS = {
-    1:{name:'Month 1 · July',      focus:'Blocked Drains, Bayside'},
-    2:{name:'Month 2 · August',    focus:'Finish Drains → Start Roof'},
-    3:{name:'Month 3 · September', focus:'Roof Depth + Secondary Services'}
+    1:{name:'Month 1 · July',      focus:'Blocked Drains, Bayside',            start:'2026-07-01', due:'2026-08-15'},
+    2:{name:'Month 2 · August',    focus:'Finish Drains → Start Roof',         start:'2026-08-01', due:'2026-09-15'},
+    3:{name:'Month 3 · September', focus:'Roof Depth + Secondary Services',    start:'2026-09-01', due:'2026-10-15'}
   };
+
+  function dnum(iso){ var p = iso.split('-'); return Date.UTC(+p[0], +p[1]-1, +p[2]); }
+  var DAY = 86400000;
+
+  /* Where the month SHOULD be today, as a straight-line pace to the deadline. */
+  function pacing(m){
+    var cfg = MONTHS[m], now = Date.now();
+    var s = dnum(cfg.start), d = dnum(cfg.due);
+    var total = Math.max(1, Math.round((d - s) / DAY));
+    var gone  = Math.round((now - s) / DAY);
+    var left  = Math.ceil((d - now) / DAY);
+    var expected = Math.max(0, Math.min(100, Math.round(gone / total * 100)));
+    return {expected: expected, daysLeft: left, overdue: left < 0, due: cfg.due, total: total};
+  }
+
+  function fmtDue(iso){ var p = iso.split('-'); return p[2] + '/' + p[1]; }
   var TYPE = {loc:'Page', blog:'Blog', power:'Power'};
 
   /* ---------- live state, keyed by asset_id ---------- */
@@ -1588,17 +1609,24 @@
     list.forEach(function(a){ var s = stateOf(a.id); sum += s.pct; if(s.k === 'done') done++; });
     var pct = Math.round(sum / list.length);
     g.querySelector('[data-mfill]').style.width = pct + '%';
-    g.querySelector('[data-mcount]').textContent = done + '/' + list.length + ' complete · ' + pct + '%';
-    /* Colour = how far through the month. Label = what is happening.
-       Kept independent so a month with work underway never reads "Not started". */
-    var cls = pct >= 80 ? 'green' : pct >= 30 ? 'amber' : 'red';
-    var label = pct === 0   ? 'Not started'
-              : pct === 100 ? 'Complete'
-              : pct < 30    ? 'Just started'
-              : pct < 80    ? 'In progress'
-              :               'Nearly done';
+
+    /* Traffic light measures pace against the 15th approval deadline, not raw
+       completion — "are we going to make it", which is the question that matters. */
+    var p = pacing(m), gap = pct - p.expected, cls, label;
+    if (pct === 100)          { cls = 'green'; label = 'Complete'; }
+    else if (p.overdue)       { cls = 'red';   label = 'OVERDUE'; }
+    else if (gap >= -5)       { cls = 'green'; label = 'On track'; }
+    else if (gap >= -20)      { cls = 'amber'; label = 'Slipping'; }
+    else                      { cls = 'red';   label = 'Behind'; }
     g.querySelector('[data-rag]').className = 'rag ' + cls;
     g.querySelector('[data-ragtext]').textContent = label;
+
+    var due = 'approval ' + fmtDue(p.due);
+    var when = pct === 100 ? 'done'
+             : p.overdue   ? Math.abs(p.daysLeft) + 'd overdue'
+             : p.daysLeft + 'd left · should be ~' + p.expected + '%';
+    g.querySelector('[data-mcount]').textContent =
+      done + '/' + list.length + ' complete · ' + pct + '% · ' + due + ' · ' + when;
   }
 
   function renderAll(){
