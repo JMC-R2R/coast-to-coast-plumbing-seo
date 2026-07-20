@@ -156,6 +156,29 @@
   .trk-pct{font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--muted);
     min-width:34px;text-align:right;}
   .trk-hint{font-family:var(--mono);font-size:9.5px;color:var(--muted);opacity:.75;}
+  .trk-who{font-family:var(--mono);font-size:9.5px;color:var(--muted);white-space:nowrap;opacity:.85;}
+
+  /* ---------- name prompt ---------- */
+  .trk-modal{position:fixed;inset:0;background:rgba(15,15,18,.72);z-index:9999;
+    display:flex;align-items:center;justify-content:center;padding:24px;}
+  .trk-modal-box{background:#fff;border-radius:14px;padding:28px;max-width:380px;width:100%;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);}
+  .trk-modal-t{font-family:var(--sans);font-weight:900;font-size:19px;color:var(--ink-dk);margin-bottom:8px;}
+  .trk-modal-p{font-size:13px;color:var(--muted);margin:0 0 16px;line-height:1.5;}
+  .trk-modal-in{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:11px 13px;
+    font-family:var(--sans);font-size:15px;color:var(--ink-dk);outline:none;}
+  .trk-modal-in:focus{border-color:var(--blue);}
+  .trk-modal-err{color:#b3261e;font-size:12px;min-height:16px;margin:5px 0 0;font-family:var(--mono);}
+  .trk-modal-btn{width:100%;margin-top:8px;border:0;border-radius:99px;background:var(--ink-dk);
+    color:#fff;font-family:var(--sans);font-weight:700;font-size:14px;padding:12px;cursor:pointer;}
+  .trk-modal-btn:hover{background:var(--blue);}
+
+  /* ---------- connection banner ---------- */
+  .trk-conn{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:9998;
+    font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 16px;border-radius:99px;
+    box-shadow:0 8px 24px rgba(0,0,0,.18);display:none;max-width:90vw;text-align:center;}
+  .trk-conn.ok{background:#e8f4ee;color:var(--st-done);border:1px solid #bfe3d0;}
+  .trk-conn.bad{background:#fdeaea;color:#b3261e;border:1px solid #f3c9c6;}
 
   /* compact meter — used inside the Power Mode table */
   .trk.mini{padding:7px 0 0;background:none;border:0;gap:8px;}
@@ -878,7 +901,7 @@
       <div class="trk-actions">
         <button class="trk-act" data-act="copy">Copy status</button>
         <button class="trk-act" data-act="reset">Reset all</button>
-        <span class="trk-hint" style="align-self:center">Click any meter to advance &middot; Shift-click to go back &middot; saved in this browser</span>
+        <span class="trk-hint" style="align-self:center">Click any meter to advance &middot; Shift-click to go back &middot; <b>saves for everyone, live</b></span>
       </div>
     </div>
 
@@ -1240,7 +1263,7 @@
   <section>
     <p class="kicker">Delivery Tracker · Bird's-Eye View</p>
     <div class="sec-head"><div class="sec-num">P</div><h2>Progress board — every deliverable, one screen</h2></div>
-    <p class="lead">Titles and progress only — no briefs, no detail. Each month holds <b>14 tracked assets</b> (6 location/service pages · 4 AI-Overview blogs · 4 ⚡ Power Mode articles). Click any meter here or in the Month 1 Briefs tab — they share the same saved state.</p>
+    <p class="lead">Titles and progress only — no briefs, no detail. Each month holds <b>14 tracked assets</b> (6 location/service pages · 4 AI-Overview blogs · 4 ⚡ Power Mode articles). Click any meter here or in the Month 1 Briefs tab. Status is shared live with the whole team — when anyone changes an asset it updates on everyone's screen within a second, stamped with their name.</p>
 
     <div class="rollup" id="rollup-all">
       <div class="rollup-top">
@@ -1252,7 +1275,7 @@
       <div class="trk-actions">
         <button class="trk-act" data-act="copy">Copy status</button>
         <button class="trk-act" data-act="reset">Reset all</button>
-        <span class="trk-hint" style="align-self:center">Click to advance &middot; Shift-click to go back &middot; saved in this browser</span>
+        <span class="trk-hint" style="align-self:center">Click to advance &middot; Shift-click to go back &middot; <b>saves for everyone, live</b></span>
       </div>
     </div>
 
@@ -1275,15 +1298,26 @@
 </div>
 </div><!-- /tab-progress -->
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 <script>
 /* ============================================================
-   PROGRESS TRACKER
-   Status is stored per-browser in localStorage. Both the Month 1
-   brief cards and the Tab 06 board render from the same registry
-   and the same store, so a click in one updates the other.
+   LIVE PROGRESS TRACKER
+   Status lives in Supabase, not the browser. Every open copy of
+   this page shows the same state, and changes propagate live via
+   Supabase Realtime (with a slow poll as a safety net).
+
+   The key below is a *publishable* key — it is designed to sit in
+   client-side code. Row Level Security plus column grants mean it
+   can only read this one table and write the status column: no
+   inserts, no deletes, no access to anything else in the project.
    ============================================================ */
 (function(){
-  var KEY = 'c2c-progress-v1';
+  var SB_URL   = 'https://ncfjsbwdzbvhjvctowbo.supabase.co';
+  var SB_KEY   = 'sb_publishable_EKmfdfPAE2tSvDqwl8BmOg_HuDYOijV';
+  var TABLE    = 'c2c_content_status';
+  var REST     = SB_URL + '/rest/v1/' + TABLE;
+  var NAME_KEY = 'c2c-editor-name';
+  var POLL_MS  = 20000;
 
   var STATES = [
     {k:'none',   label:'Not started', pct:0,   col:'var(--st-none)'},
@@ -1294,9 +1328,8 @@
   ];
   var IDX = {}; STATES.forEach(function(s,i){ IDX[s.k] = i; });
 
-  /* --- the 42 tracked assets, taken from the Strategy + Briefs tabs --- */
+  /* Structure renders instantly from this registry; Supabase supplies status. */
   var ASSETS = [
-    /* ---- MONTH 1 · July — Blocked Drains, Bayside ---- */
     {id:'m1-loc-brighton',    m:1, t:'loc',   n:'Blocked Drains Brighton',            u:'/blocked-drains-brighton/'},
     {id:'m1-loc-cheltenham',  m:1, t:'loc',   n:'Blocked Drains Cheltenham',          u:'/blocked-drains-cheltenham/'},
     {id:'m1-loc-seaford',     m:1, t:'loc',   n:'Blocked Drains Seaford',             u:'/blocked-drains-seaford/'},
@@ -1312,12 +1345,11 @@
     {id:'m1-pm-recurring',    m:1, t:'power', n:'Why does my drain keep blocking again and again?'},
     {id:'m1-pm-afterhours',   m:1, t:'power', n:'Blocked drain after hours — who to call in Bayside?'},
 
-    /* ---- MONTH 2 · August — Finish Drains, Start Roof ---- */
     {id:'m2-loc-mentone',     m:2, t:'loc',   n:'Blocked Drains Mentone',             u:'/blocked-drains-mentone/'},
     {id:'m2-loc-mordialloc',  m:2, t:'loc',   n:'Blocked Drains Mordialloc',          u:'/blocked-drains-mordialloc/'},
     {id:'m2-loc-hampton',     m:2, t:'loc',   n:'Blocked Drains Hampton',             u:'/blocked-drains-hampton/'},
     {id:'m2-loc-cctv',        m:2, t:'loc',   n:'CCTV Drain Inspections (service)',   u:'/cctv-drain-inspections/'},
-    {id:'m2-loc-roofbayside', m:2, t:'loc',   n:'Roof Leak Detection — Bayside (hub)', u:'/roof-leak-detection-bayside/'},
+    {id:'m2-loc-roofbayside', m:2, t:'loc',   n:'Roof Leak Detection — Bayside (hub)',u:'/roof-leak-detection-bayside/'},
     {id:'m2-loc-roofemerg',   m:2, t:'loc',   n:'Emergency Roof Leak Repairs (service)', u:'/emergency-roof-leak-repairs/'},
     {id:'m2-blog-whyleak',    m:2, t:'blog',  n:'Why is my roof leaking? 7 common winter causes'},
     {id:'m2-blog-findleak',   m:2, t:'blog',  n:'How to find a roof leak (and what to do next)'},
@@ -1328,13 +1360,12 @@
     {id:'m2-pm-condensation', m:2, t:'power', n:'Roof leak vs condensation — what’s actually dripping?'},
     {id:'m2-pm-prepurchase',  m:2, t:'power', n:'Is a pre-purchase drain inspection worth it before you buy?'},
 
-    /* ---- MONTH 3 · September — Roof Depth + Secondary Services ---- */
     {id:'m3-loc-roofmp',      m:3, t:'loc',   n:'Roof Leak Detection — Mornington Peninsula (hub)', u:'/roof-leak-detection-mornington-peninsula/'},
     {id:'m3-loc-stormwater',  m:3, t:'loc',   n:'Stormwater Drains & Flooding (service)', u:'/stormwater-drains/'},
     {id:'m3-loc-burstpipe',   m:3, t:'loc',   n:'Burst & Broken Pipes (service)',      u:'/burst-pipe-repairs/'},
-    {id:'m3-loc-highett',     m:3, t:'loc',   n:'Blocked Drains Highett',             u:'/blocked-drains-highett/'},
-    {id:'m3-loc-blackrock',   m:3, t:'loc',   n:'Blocked Drains Black Rock',          u:'/blocked-drains-black-rock/'},
-    {id:'m3-loc-beaumaris',   m:3, t:'loc',   n:'Blocked Drains Beaumaris',           u:'/blocked-drains-beaumaris/'},
+    {id:'m3-loc-highett',     m:3, t:'loc',   n:'Blocked Drains Highett',              u:'/blocked-drains-highett/'},
+    {id:'m3-loc-blackrock',   m:3, t:'loc',   n:'Blocked Drains Black Rock',           u:'/blocked-drains-black-rock/'},
+    {id:'m3-loc-beaumaris',   m:3, t:'loc',   n:'Blocked Drains Beaumaris',            u:'/blocked-drains-beaumaris/'},
     {id:'m3-blog-emergency',  m:3, t:'blog',  n:'Roof leak emergency? What to do in the first hour'},
     {id:'m3-blog-signs',      m:3, t:'blog',  n:'6 signs of a hidden roof leak (catch it early)'},
     {id:'m3-blog-prevent',    m:3, t:'blog',  n:'How to prevent blocked drains before summer'},
@@ -1352,33 +1383,154 @@
   };
   var TYPE = {loc:'Page', blog:'Blog', power:'Power'};
 
-  /* ---------- store ---------- */
-  var store = {};
-  try { store = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){ store = {}; }
-  function save(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e){} }
-  function get(id){ var k = store[id]; return (k && IDX[k] !== undefined) ? k : 'none'; }
-  function stateOf(id){ return STATES[IDX[get(id)]]; }
-  function bump(id, back){
-    var i = IDX[get(id)] + (back ? -1 : 1);
-    if(i < 0) i = STATES.length - 1;
-    if(i > STATES.length - 1) i = 0;
-    store[id] = STATES[i].k; save(); renderAll();
+  /* ---------- live state, keyed by asset_id ---------- */
+  var state = {};   /* id -> {status, updated_by, updated_at} */
+  ASSETS.forEach(function(a){ state[a.id] = {status:'none', updated_by:null, updated_at:null}; });
+
+  function rec(id){ return state[id] || {status:'none'}; }
+  function stateOf(id){ var k = rec(id).status; return STATES[IDX[k] === undefined ? 0 : IDX[k]]; }
+
+  /* ---------- editor name (only thing kept locally) ---------- */
+  function storedName(){ try { return localStorage.getItem(NAME_KEY) || ''; } catch(e){ return ''; } }
+  function saveName(n){ try { localStorage.setItem(NAME_KEY, n); } catch(e){} }
+
+  function askName(cb){
+    var existing = storedName();
+    if(existing){ cb(existing); return; }
+    var ov = document.createElement('div');
+    ov.className = 'trk-modal';
+    ov.innerHTML =
+      '<div class="trk-modal-box">' +
+        '<div class="trk-modal-t">Who\'s updating?</div>' +
+        '<p class="trk-modal-p">Your name is stamped against each change so the team can see who moved what. Asked once on this device.</p>' +
+        '<input class="trk-modal-in" type="text" placeholder="e.g. Neha" maxlength="40" autofocus>' +
+        '<div class="trk-modal-err"></div>' +
+        '<button class="trk-modal-btn" type="button">Continue</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    var input = ov.querySelector('.trk-modal-in'),
+        err   = ov.querySelector('.trk-modal-err'),
+        btn   = ov.querySelector('.trk-modal-btn');
+    function go(){
+      var v = (input.value || '').trim();
+      if(v.length < 2){ err.textContent = 'Please enter your name.'; input.focus(); return; }
+      saveName(v); document.body.removeChild(ov); cb(v);
+    }
+    btn.addEventListener('click', go);
+    input.addEventListener('keydown', function(e){ if(e.key === 'Enter') go(); });
+    setTimeout(function(){ input.focus(); }, 30);
   }
 
-  /* ---------- meters on the brief cards + Power Mode rows ---------- */
+  /* ---------- connection banner ---------- */
+  var banner;
+  function setConn(kind, msg){
+    if(!banner){
+      banner = document.createElement('div');
+      banner.className = 'trk-conn';
+      document.body.appendChild(banner);
+    }
+    banner.className = 'trk-conn ' + kind;
+    banner.textContent = msg;
+    banner.style.display = msg ? 'block' : 'none';
+    if(kind === 'ok'){ setTimeout(function(){ if(banner.className.indexOf('ok') > -1) banner.style.display = 'none'; }, 2200); }
+  }
+
+  function ago(iso){
+    if(!iso) return '';
+    var s = Math.max(0, (Date.now() - new Date(iso).getTime())/1000);
+    if(s < 60)    return 'just now';
+    if(s < 3600)  return Math.floor(s/60) + 'm ago';
+    if(s < 86400) return Math.floor(s/3600) + 'h ago';
+    return Math.floor(s/86400) + 'd ago';
+  }
+
+  /* ---------- server I/O ---------- */
+  function headers(extra){
+    var h = {'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json'};
+    if(extra) Object.keys(extra).forEach(function(k){ h[k] = extra[k]; });
+    return h;
+  }
+
+  function load(){
+    return fetch(REST + '?select=asset_id,status,updated_by,updated_at', {headers: headers()})
+      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(rows){
+        rows.forEach(function(row){
+          state[row.asset_id] = {status: row.status, updated_by: row.updated_by, updated_at: row.updated_at};
+        });
+        renderAll();
+        return true;
+      })
+      .catch(function(e){
+        setConn('bad', 'Can’t reach the status server — showing last known state. ' + e.message);
+        return false;
+      });
+  }
+
+  function push(id, status, who){
+    var prev = Object.assign({}, rec(id));
+    state[id] = {status: status, updated_by: who, updated_at: new Date().toISOString()};
+    renderAll();                                   /* optimistic */
+    return fetch(REST + '?asset_id=eq.' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: headers({'Prefer':'return=representation'}),
+        body: JSON.stringify({status: status, updated_by: who})
+      })
+      .then(function(r){ if(!r.ok) return r.text().then(function(t){ throw new Error(t || ('HTTP '+r.status)); }); return r.json(); })
+      .then(function(rows){
+        if(rows && rows[0]) state[id] = {status: rows[0].status, updated_by: rows[0].updated_by, updated_at: rows[0].updated_at};
+        renderAll(); setConn('ok', 'Saved');
+      })
+      .catch(function(e){
+        state[id] = prev; renderAll();             /* roll back — never show a change that did not save */
+        setConn('bad', 'Change did not save: ' + e.message);
+      });
+  }
+
+  function bump(id, back){
+    askName(function(who){
+      var i = IDX[rec(id).status];
+      if(i === undefined) i = 0;
+      i += back ? -1 : 1;
+      if(i < 0) i = STATES.length - 1;
+      if(i > STATES.length - 1) i = 0;
+      push(id, STATES[i].k, who);
+    });
+  }
+
+  /* ---------- meters ---------- */
   var meters = [].slice.call(document.querySelectorAll('.trk[data-asset]'));
 
+  function buildMeter(el){
+    el.innerHTML =
+      '<button class="trk-btn" type="button">' +
+        '<span class="trk-dot"></span><span class="trk-label"></span>' +
+      '</button>' +
+      '<span class="trk-bar"><i class="trk-fill" style="width:0%"></i></span>' +
+      '<span class="trk-pct"></span>' +
+      '<span class="trk-who"></span>';
+    el.addEventListener('click', function(ev){
+      if(!ev.target.closest('.trk-btn')) return;
+      bump(el.getAttribute('data-asset'), ev.shiftKey);
+    });
+  }
+
   function paintMeter(el){
-    var id = el.getAttribute('data-asset'), s = stateOf(id);
+    var id = el.getAttribute('data-asset'), s = stateOf(id), r = rec(id);
     el.style.setProperty('--st', s.col);
     el.querySelector('.trk-label').textContent = s.label;
     el.querySelector('.trk-fill').style.width = s.pct + '%';
     el.querySelector('.trk-pct').textContent = s.pct + '%';
+    var who = el.querySelector('.trk-who');
+    if(who) who.textContent = r.updated_by ? (r.updated_by + ' · ' + ago(r.updated_at)) : '';
     el.querySelector('.trk-btn').setAttribute('aria-label', 'Status: ' + s.label + '. Click to advance.');
   }
 
   /* ---------- Tab 06 board ---------- */
   var board = document.getElementById('progress-board');
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
   function buildBoard(){
     if(!board) return;
     var html = '';
@@ -1401,34 +1553,15 @@
           html += '<div class="prow">' +
             '<span class="pk ' + a.t + '">' + TYPE[a.t] + '</span>' +
             '<span class="pt">' + esc(a.n) + (a.u ? '<span>' + esc(a.u) + '</span>' : '') + '</span>' +
-            '<span class="trk" data-asset="' + a.id + '" style="background:none;border:0;padding:0;flex:1 1 190px;"></span>' +
+            '<span class="trk" data-asset="' + a.id + '" style="background:none;border:0;padding:0;flex:1 1 210px;"></span>' +
           '</div>';
         });
       });
       html += '</div>';
     });
     board.innerHTML = html;
-    /* wire the freshly built board meters */
     [].slice.call(board.querySelectorAll('.trk[data-asset]')).forEach(function(el){
-      buildMeter(el);
-      meters.push(el);
-    });
-  }
-
-  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-
-  function buildMeter(el){
-    el.innerHTML =
-      '<button class="trk-btn" type="button">' +
-        '<span class="trk-dot"></span><span class="trk-label"></span>' +
-      '</button>' +
-      '<span class="trk-bar"><i class="trk-fill" style="width:0%"></i></span>' +
-      '<span class="trk-pct"></span>';
-    el.addEventListener('click', function(ev){
-      var btn = ev.target.closest('.trk-btn');
-      if(!btn) return;
-      bump(el.getAttribute('data-asset'), ev.shiftKey);
+      buildMeter(el); meters.push(el);
     });
   }
 
@@ -1439,8 +1572,7 @@
     STATES.forEach(function(s){ tally[s.k] = 0; });
     list.forEach(function(a){ var s = stateOf(a.id); sum += s.pct; tally[s.k]++; });
     var pct = total ? Math.round(sum / total) : 0;
-    el.querySelector('[data-rollup="count"]').firstChild.nodeValue =
-      tally.done + ' / ' + total + ' complete';
+    el.querySelector('[data-rollup="count"]').firstChild.nodeValue = tally.done + ' / ' + total + ' complete';
     el.querySelector('[data-rollup="pct"]').textContent = pct + '% overall';
     el.querySelector('[data-rollup="fill"]').style.width = pct + '%';
     el.querySelector('[data-rollup="legend"]').innerHTML = STATES.map(function(s){
@@ -1457,18 +1589,16 @@
     var pct = Math.round(sum / list.length);
     g.querySelector('[data-mfill]').style.width = pct + '%';
     g.querySelector('[data-mcount]').textContent = done + '/' + list.length + ' complete · ' + pct + '%';
-    var rag = g.querySelector('[data-rag]'), txt = g.querySelector('[data-ragtext]');
-    /* Colour = how far through the month we are (the traffic light).
-       Label = what is actually happening. Keep them independent, or a month
-       with real work underway can end up announcing itself as "Not started". */
+    /* Colour = how far through the month. Label = what is happening.
+       Kept independent so a month with work underway never reads "Not started". */
     var cls = pct >= 80 ? 'green' : pct >= 30 ? 'amber' : 'red';
     var label = pct === 0   ? 'Not started'
               : pct === 100 ? 'Complete'
               : pct < 30    ? 'Just started'
               : pct < 80    ? 'In progress'
               :               'Nearly done';
-    rag.className = 'rag ' + cls;
-    txt.textContent = label;
+    g.querySelector('[data-rag]').className = 'rag ' + cls;
+    g.querySelector('[data-ragtext]').textContent = label;
   }
 
   function renderAll(){
@@ -1482,13 +1612,20 @@
   document.querySelectorAll('[data-act]').forEach(function(b){
     b.addEventListener('click', function(){
       if(b.getAttribute('data-act') === 'reset'){
-        if(confirm('Reset every asset back to "Not started"?')){ store = {}; save(); renderAll(); }
+        if(!confirm('Reset every asset back to "Not started" for the whole team?')) return;
+        askName(function(who){
+          fetch(REST + '?asset_id=neq.__none__', {
+            method:'PATCH', headers: headers(),
+            body: JSON.stringify({status:'none', updated_by: who})
+          }).then(load).then(function(){ setConn('ok','Reset'); });
+        });
       } else {
         var lines = ['Coast to Coast — content progress'];
         [1,2,3].forEach(function(m){
           lines.push('', MONTHS[m].name.replace(/·/g,'-') + ':');
           ASSETS.filter(function(a){ return a.m === m; }).forEach(function(a){
-            lines.push('  [' + stateOf(a.id).label + '] ' + a.n);
+            var r = rec(a.id);
+            lines.push('  [' + stateOf(a.id).label + '] ' + a.n + (r.updated_by ? '  (' + r.updated_by + ')' : ''));
           });
         });
         var txt = lines.join('\n');
@@ -1502,10 +1639,34 @@
     });
   });
 
+  /* ---------- realtime + safety poll ---------- */
+  function startRealtime(){
+    if(!window.supabase || !window.supabase.createClient){ return false; }
+    try {
+      var client = window.supabase.createClient(SB_URL, SB_KEY, {realtime:{params:{eventsPerSecond:5}}});
+      client.channel('c2c-status')
+        .on('postgres_changes', {event:'UPDATE', schema:'public', table:TABLE}, function(payload){
+          var row = payload.new;
+          if(!row || !row.asset_id) return;
+          state[row.asset_id] = {status:row.status, updated_by:row.updated_by, updated_at:row.updated_at};
+          renderAll();
+        })
+        .subscribe(function(status){
+          if(status === 'SUBSCRIBED') setConn('ok', 'Live — changes sync across the team');
+        });
+      return true;
+    } catch(e){ return false; }
+  }
+
   /* ---------- boot ---------- */
   meters.forEach(buildMeter);
   buildBoard();
   renderAll();
+  load().then(function(){
+    startRealtime();
+    setInterval(load, POLL_MS);          /* catches anything realtime misses */
+  });
+  setInterval(renderAll, 60000);         /* keep the "2m ago" stamps honest */
 })();
 </script>
 
