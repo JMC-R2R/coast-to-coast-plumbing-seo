@@ -236,6 +236,7 @@
   #tab-progress .pk.loc{background:var(--soft-blue);color:#0a6a93;}
   #tab-progress .pk.blog{background:#eef7ee;color:var(--good);}
   #tab-progress .pk.power{background:#fff8e1;color:#8a6d00;}
+  #tab-progress .pk.gbp{background:#eaf3ff;color:#1663b8;}
   #tab-progress .prow .pt{flex:1 1 200px;font-size:13px;font-weight:600;color:var(--ink-dk);min-width:0;}
   #tab-progress .prow .pt span{display:block;font-family:var(--mono);font-size:9.5px;
     font-weight:400;color:var(--muted);margin-top:1px;}
@@ -1282,7 +1283,7 @@
     <div id="progress-board"></div>
 
     <div class="callout" style="margin-top:18px;">
-      <b>How the traffic light works:</b> content goes to the client for approval on the <b>15th of the following month</b> — Month 1 (July) is due <b>15/08</b>, Month 2 <b>15/09</b>, Month 3 <b>15/10</b>. All 14 assets in a month count toward that deadline.
+      <b>How the traffic light works:</b> content goes to the client for approval on the <b>15th of the following month</b> — Month 1 (July) is due <b>15/08</b>, Month 2 <b>15/09</b>, Month 3 <b>15/10</b>. All 14 assets in a month count toward that deadline. <b>Google Business Profile posts</b> (4/week) are tracked separately below for visibility — they publish live on a weekly cadence, so they're not graded against the 15th.
       The light measures <b>pace against that date</b>, not raw completion: it compares where the month actually is against where it should be on a straight line from the 1st to the 15th.
       <span style="color:#1c7c54;font-weight:700;">Green</span> = on track (at pace or ahead) ·
       <span style="color:#8a5a00;font-weight:700;">Amber</span> = slipping (5–20 points behind pace) ·
@@ -1345,6 +1346,10 @@
     {id:'m1-pm-cost',         m:1, t:'power', n:'How much does a plumber charge to clear a blocked drain?'},
     {id:'m1-pm-recurring',    m:1, t:'power', n:'Why does my drain keep blocking again and again?'},
     {id:'m1-pm-afterhours',   m:1, t:'power', n:'Blocked drain after hours — who to call in Bayside?'},
+    {id:'m1-gbp-w1',          m:1, t:'gbp',   n:'GBP posts — Week 1 (4 posts)'},
+    {id:'m1-gbp-w2',          m:1, t:'gbp',   n:'GBP posts — Week 2 (4 posts)'},
+    {id:'m1-gbp-w3',          m:1, t:'gbp',   n:'GBP posts — Week 3 (4 posts)'},
+    {id:'m1-gbp-w4',          m:1, t:'gbp',   n:'GBP posts — Week 4 (4 posts)'},
 
     {id:'m2-loc-mentone',     m:2, t:'loc',   n:'Blocked Drains Mentone',             u:'/blocked-drains-mentone/'},
     {id:'m2-loc-mordialloc',  m:2, t:'loc',   n:'Blocked Drains Mordialloc',          u:'/blocked-drains-mordialloc/'},
@@ -1360,6 +1365,10 @@
     {id:'m2-pm-insurance',    m:2, t:'power', n:'Does home insurance cover a leaking roof in Victoria?'},
     {id:'m2-pm-condensation', m:2, t:'power', n:'Roof leak vs condensation — what’s actually dripping?'},
     {id:'m2-pm-prepurchase',  m:2, t:'power', n:'Is a pre-purchase drain inspection worth it before you buy?'},
+    {id:'m2-gbp-w1',          m:2, t:'gbp',   n:'GBP posts — Week 1 (4 posts)'},
+    {id:'m2-gbp-w2',          m:2, t:'gbp',   n:'GBP posts — Week 2 (4 posts)'},
+    {id:'m2-gbp-w3',          m:2, t:'gbp',   n:'GBP posts — Week 3 (4 posts)'},
+    {id:'m2-gbp-w4',          m:2, t:'gbp',   n:'GBP posts — Week 4 (4 posts)'},
 
     {id:'m3-loc-roofmp',      m:3, t:'loc',   n:'Roof Leak Detection — Mornington Peninsula (hub)', u:'/roof-leak-detection-mornington-peninsula/'},
     {id:'m3-loc-stormwater',  m:3, t:'loc',   n:'Stormwater Drains & Flooding (service)', u:'/stormwater-drains/'},
@@ -1374,7 +1383,11 @@
     {id:'m3-pm-stormwater',   m:3, t:'power', n:'Who’s the best plumber for blocked stormwater on the Peninsula?'},
     {id:'m3-pm-yardflood',    m:3, t:'power', n:'Why does my yard flood when it rains?'},
     {id:'m3-pm-heavyrain',    m:3, t:'power', n:'Why does my roof only leak in heavy rain?'},
-    {id:'m3-pm-burstcost',    m:3, t:'power', n:'What does it cost to fix a burst pipe?'}
+    {id:'m3-pm-burstcost',    m:3, t:'power', n:'What does it cost to fix a burst pipe?'},
+    {id:'m3-gbp-w1',          m:3, t:'gbp',   n:'GBP posts — Week 1 (4 posts)'},
+    {id:'m3-gbp-w2',          m:3, t:'gbp',   n:'GBP posts — Week 2 (4 posts)'},
+    {id:'m3-gbp-w3',          m:3, t:'gbp',   n:'GBP posts — Week 3 (4 posts)'},
+    {id:'m3-gbp-w4',          m:3, t:'gbp',   n:'GBP posts — Week 4 (4 posts)'}
   ];
 
   /* Each month's content is sent to the client for approval on the 15th of the
@@ -1402,7 +1415,11 @@
   }
 
   function fmtDue(iso){ var p = iso.split('-'); return p[2] + '/' + p[1]; }
-  var TYPE = {loc:'Page', blog:'Blog', power:'Power'};
+  var TYPE = {loc:'Page', blog:'Blog', power:'Power', gbp:'GBP'};
+  var SUBHEAD = {loc:'Location &amp; service pages', blog:'AI-Overview blogs', power:'⚡ Power Mode articles', gbp:'📍 Google Business Profile posts (weekly — tracked, not part of the 15th deadline)'};
+  /* GBP is a weekly cadence published live, not a batch approved on the 15th, so
+     it is excluded from the pace/RAG and roll-up maths and shown for monitoring only. */
+  function isDeadline(a){ return a.t !== 'gbp'; }
 
   /* ---------- live state, keyed by asset_id ---------- */
   var state = {};   /* id -> {status, updated_by, updated_at} */
@@ -1564,12 +1581,10 @@
           '<span class="mh-m">' + MONTHS[m].focus + ' · <b data-mcount>—</b></span>' +
         '</div>' +
         '<div class="mgroup-bar"><i data-mfill style="width:0%"></i></div>';
-      ['loc','blog','power'].forEach(function(t){
+      ['loc','blog','power','gbp'].forEach(function(t){
         var rows = list.filter(function(a){ return a.t === t; });
         if(!rows.length) return;
-        html += '<div class="subhead">' +
-          (t === 'loc' ? 'Location &amp; service pages' : t === 'blog' ? 'AI-Overview blogs' : '⚡ Power Mode articles') +
-          ' · ' + rows.length + '</div>';
+        html += '<div class="subhead">' + SUBHEAD[t] + ' · ' + rows.length + '</div>';
         rows.forEach(function(a){
           html += '<div class="prow">' +
             '<span class="pk ' + a.t + '">' + TYPE[a.t] + '</span>' +
@@ -1604,7 +1619,7 @@
   function paintMonth(m){
     var g = board && board.querySelector('.mgroup[data-month="' + m + '"]');
     if(!g) return;
-    var list = ASSETS.filter(function(a){ return a.m === m; });
+    var list = ASSETS.filter(function(a){ return a.m === m && isDeadline(a); });
     var sum = 0, done = 0;
     list.forEach(function(a){ var s = stateOf(a.id); sum += s.pct; if(s.k === 'done') done++; });
     var pct = Math.round(sum / list.length);
@@ -1631,8 +1646,8 @@
 
   function renderAll(){
     meters.forEach(paintMeter);
-    paintRollup(document.getElementById('rollup-m1'), ASSETS.filter(function(a){ return a.m === 1; }));
-    paintRollup(document.getElementById('rollup-all'), ASSETS);
+    paintRollup(document.getElementById('rollup-m1'), ASSETS.filter(function(a){ return a.m === 1 && isDeadline(a); }));
+    paintRollup(document.getElementById('rollup-all'), ASSETS.filter(isDeadline));
     [1,2,3].forEach(paintMonth);
   }
 
